@@ -13,7 +13,7 @@
 **PC-Tool und Control Panel**
 - CLI `umwelt` (ping, status, read, config, ack, time, monitor, gui) mit CSV-Messprotokoll
 - Control Panel (PySide6): Live-Kacheln, Verlauf, SQLite-Langzeitlog, CSV-Export, Einstellungen, Update-Funktion
-- Installer `UmgebungssensorenPanel-Setup-0.1.0.exe`; Updater liest `\131.234.237.14\Gutmann\01_Interna\05_Software\Umgebungssensoren`
+- Installer `UmgebungssensorenPanel-Setup-0.1.0.exe`; Updater liest `\\131.234.237.14\Gutmann\01_Interna\05_Software\Umgebungssensoren`
 - Tags: `panel-v0.1.0` (Control Panel)
 
 **Bekannt offen:** optische Abnahme des Displays am Gerät; Installation/Update/Deinstallation auf einem Rechner ohne Entwicklungsumgebung noch nicht geprüft.
