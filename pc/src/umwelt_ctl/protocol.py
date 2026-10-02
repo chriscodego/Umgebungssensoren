@@ -108,6 +108,10 @@ class Measurement:
         return self.gas
 
     @property
+    def gas_kohm(self) -> float | None:
+        return None if self.gas is None else self.gas / 1000
+
+    @property
     def any_valid(self) -> bool:
         return any(v is not None for v in (self.t, self.rh, self.p, self.gas))
 

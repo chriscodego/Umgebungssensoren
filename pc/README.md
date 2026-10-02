@@ -24,3 +24,6 @@ Repos); Aufbewahrung und Löschen entscheidet der Nutzer.
 
 Tests: `python -m pytest pc/tests` (ohne Gerät), `python -m pytest pc/tests -m hardware`
 (Gerät an COM9 bzw. `UMWELT_PORT`).
+
+Control Panel (PySide6, SQLite-Log, Verlauf, CSV-Export): `pip install -e "pc[panel]"`, dann
+`umwelt-panel` bzw. `python -m umwelt_panel` (siehe `docs/configuration.md`).

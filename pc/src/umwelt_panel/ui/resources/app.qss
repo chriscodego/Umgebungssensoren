@@ -1,0 +1,158 @@
+/* Deliberate deviations from the native Qt style (look of the RFB Controll Panel).
+ *
+ * Only a few things get colours of their own: the connection banner (state of the link
+ * at a glance), the alarm banner (must not be missed, blinks while unacknowledged, always
+ * with text — never colour alone) and the value tiles. Everything else stays native.
+ *
+ * Widgets are addressed by objectName and by dynamic properties ("severity", "state",
+ * "blink", "alarm"); there is no setStyleSheet() call in the widget code. Font sizes are
+ * derived from QApplication.font() in Python, so 150 % display scaling stays correct.
+ */
+
+/* -- connection banner ------------------------------------------------------------- */
+
+#connectionBanner {
+    border: none;
+    border-radius: 4px;
+}
+
+#connectionBanner[severity="ok"] {
+    background-color: #1b5e20;
+}
+
+#connectionBanner[severity="busy"] {
+    background-color: #8d6e00;
+}
+
+#connectionBanner[severity="warning"] {
+    background-color: #e65100;
+}
+
+#connectionBanner[severity="error"] {
+    background-color: #c62828;
+}
+
+#connectionBanner[severity="idle"] {
+    background-color: #455a64;
+}
+
+#connectionBannerText, #connectionBannerDetail, #connectionBannerPortLabel {
+    color: #ffffff;
+}
+
+#connectionBannerText {
+    font-weight: bold;
+}
+
+#connectionBannerButton {
+    color: #212121;
+    background-color: #fafafa;
+    border: 1px solid #fafafa;
+    border-radius: 4px;
+    padding: 5px 14px;
+}
+
+#connectionBannerButton:hover {
+    background-color: #ffffff;
+}
+
+#connectionBannerButton:disabled {
+    color: #9e9e9e;
+    background-color: #e0e0e0;
+}
+
+/* -- alarm banner ------------------------------------------------------------------- */
+
+#alarmBanner {
+    border-radius: 4px;
+    border: 2px solid #8e0000;
+}
+
+#alarmBanner[state="unacked"] {
+    background-color: #c62828;
+}
+
+#alarmBanner[state="unacked"][blink="true"] {
+    background-color: #ff8a80;
+}
+
+#alarmBanner[state="acked"] {
+    background-color: #f3c2c2;
+    border: 1px solid #c62828;
+}
+
+#alarmBannerText {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+#alarmBanner[state="unacked"][blink="true"] #alarmBannerText,
+#alarmBanner[state="acked"] #alarmBannerText {
+    color: #5c0000;
+}
+
+#alarmBannerButton {
+    color: #212121;
+    background-color: #fafafa;
+    border: 1px solid #8e0000;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-weight: bold;
+}
+
+/* -- value tiles -------------------------------------------------------------------- */
+
+#valueBox {
+    background-color: #f4f6f8;
+    border: 1px solid #b0bec5;
+    border-radius: 6px;
+}
+
+#valueBox[alarm="true"] {
+    background-color: #fdecea;
+    border: 2px solid #c62828;
+}
+
+#valueBoxTitle {
+    color: #37474f;
+    font-weight: bold;
+}
+
+#valueBoxValue {
+    color: #12355b;
+}
+
+#valueBoxValue[state="muted"] {
+    color: #90a4ae;
+}
+
+#valueBoxSub {
+    color: #546e7a;
+}
+
+#valueBoxSub[state="error"] {
+    color: #b00020;
+    font-weight: bold;
+}
+
+/* -- log strip and history -------------------------------------------------------------- */
+
+#logStrip {
+    background-color: #eceff1;
+    border: 1px solid #cfd8dc;
+    border-radius: 4px;
+}
+
+#logStatsLabel, #historyStatsLabel {
+    color: #37474f;
+}
+
+#historyChart {
+    background-color: #ffffff;
+    border: 1px solid #b0bec5;
+    border-radius: 4px;
+}
+
+#dialogHint {
+    color: #546e7a;
+}

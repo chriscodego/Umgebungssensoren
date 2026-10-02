@@ -15,6 +15,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "src"))
 
 from umwelt_ctl.device import UmweltDevice  # noqa: E402  (after sys.path setup)
 
+# Control Panel GUI tests (marker ``gui``) run headless. pytest-qt is disabled in
+# pyproject.toml and only loaded here when PySide6 (extra "panel") is installed.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+try:
+    import PySide6  # noqa: F401
+except ImportError:  # pragma: no cover - plain `pc[dev]` install
+    HAVE_QT = False
+else:
+    HAVE_QT = True
+    pytest_plugins = ("pytestqt.plugin",)
+
 Handler = Callable[[str], "list[str] | str | None"]
 
 

@@ -20,7 +20,7 @@ import datetime as _dt
 import io
 import logging
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from .protocol import Measurement
 
@@ -57,6 +57,15 @@ def _format(rows: list[tuple[str, ...]]) -> str:
     return buf.getvalue()
 
 
+def csv_text(rows: Iterable[tuple[str, ...]], *, header: bool = False) -> str:
+    """Rows (from :func:`make_row`) in the log format; ``header`` prepends BOM + header row.
+
+    Shared by :class:`MessLogger` and the Control Panel export, so both files are identical.
+    """
+    text = _format(list(rows))
+    return BOM + _format([HEADER]) + text if header else text
+
+
 class MessLogger:
     """Appends measurement rows to a CSV file; see the module docstring."""
 
@@ -85,9 +94,7 @@ class MessLogger:
         if not self._pending:
             return
         new = not os.path.exists(self.path) or os.path.getsize(self.path) == 0
-        text = _format(self._pending)
-        if new:
-            text = BOM + _format([HEADER]) + text
+        text = csv_text(self._pending, header=new)
         with open(self.path, "a", encoding="utf-8", newline="") as f:
             f.write(text)
             f.flush()

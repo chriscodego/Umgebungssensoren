@@ -48,6 +48,8 @@ Befund 2026-10-02 (PROJ-1):
 - Optiboot (Uno) kann das EEPROM nicht per avrdude auslesen — eine „EEPROM-Sicherung“ enthält dann Flash-Bytes
 - Adafruit GFX bindet über BusIO `Wire.h` ein: der TWI-ISR der Wire-Bibliothek (~0,8 KB) wird immer gelinkt
 - Bezeichner `u16` ist in den AVR/Arduino-Headern ein Typ — eigene Funktionen nicht so nennen
+- Qt `offscreen` hat unter Windows keine Schriften → Screenshots mit `QT_QPA_FONTDIR=C:/Windows/Fonts`
+- pytest-qt bricht ohne Qt-Binding den ganzen Testlauf ab → in `pyproject.toml` per `-p no:pytest-qt` aus, `conftest.py` lädt es nur mit PySide6
 - Bosch-Feuchtekompensation (int32) läuft bei gesättigten Rohwerten (> 100 %rF) über → vorher abfangen (in `sensor.cpp` umgesetzt)
 
 ## 6. Speicherbudget
@@ -77,4 +79,5 @@ Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-histor
 | 2026-10-02 | PROJ-1 | Bestandsgerät analysiert (9600-Baud-CSV, BME680 funktioniert, EEPROM-Sicherung ungültig) |
 | 2026-10-02 | PROJ-2/3/6 | Firmware 0.1.0: eigener BME680-/TWI-Treiber, Übersicht + Einstellungsseite, Protokoll v1, Alarm/Piezo, EEPROM Layout 1; noch nicht geflasht |
 | 2026-10-02 | PROJ-4/5 | PC-Tool umwelt_ctl (CLI, monitor, GUI, Fake-Device-Tests) und CSV-Messprotokoll |
+| 2026-10-02 | PROJ-8 | Control Panel `umwelt_panel` (PySide6, Extra `panel`): Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungsdialog, SQLite-Log (`user_version` 1) mit Verlauf und CSV-Export über `messlog.csv_text`; Serial im QThread; pytest-qt nur mit PySide6 geladen |
 | 2026-10-02 | PROJ-2 | Anzeige: Seitenleiste unten entfernt, Kacheln 80×58 füllen den Schirm, Einstellungen über Tipp auf die obere Leiste, „Zurück“-Taste; Flash 31 426 B (97 %) |

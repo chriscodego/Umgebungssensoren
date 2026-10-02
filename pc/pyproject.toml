@@ -5,26 +5,38 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "umwelt-ctl"
 version = "0.1.0"
-description = "PC-Tool für die Umgebungssensoren-Anzeige (Arduino + BME680): CLI, Monitor mit CSV-Messprotokoll, Tkinter-GUI"
+description = "PC-Tool für die Umgebungssensoren-Anzeige (Arduino + BME680): CLI, Monitor mit CSV-Messprotokoll, Tkinter-GUI, Control Panel (PySide6, Extra panel)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["pyserial>=3.5"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "ruff>=0.4"]
+dev = ["pytest>=7", "ruff>=0.4", "pytest-qt>=4.4"]
+# Control Panel (PROJ-8): only the panel needs these; the CLI stays pyserial-only.
+panel = ["PySide6>=6.6", "platformdirs>=4.0"]
 
 [project.scripts]
 umwelt = "umwelt_ctl.cli:main"
 
+[project.gui-scripts]
+umwelt-panel = "umwelt_panel.app:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"umwelt_panel.ui.resources" = ["*.qss"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "-m 'not hardware'"
+# pytest-qt is loaded from conftest.py only when PySide6 is installed (extra "panel"), so a
+# plain `pip install -e "pc[dev]"` still runs every Qt-free test.
+addopts = "-m 'not hardware' -p no:pytest-qt"
+qt_api = "pyside6"
 markers = [
     "hardware: braucht das echte Gerät (Port über UMWELT_PORT, Standard COM9); nur mit -m hardware",
+    "gui: Control-Panel-Oberfläche (PySide6, offscreen); wird ohne PySide6 übersprungen",
 ]
 
 [tool.ruff]
@@ -36,5 +48,5 @@ src = ["src", "tests"]
 select = ["E", "F", "W", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["umwelt_ctl"]
+known-first-party = ["umwelt_ctl", "umwelt_panel"]
 known-local-folder = ["conftest"]

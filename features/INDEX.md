@@ -26,6 +26,7 @@ Noch keine Features ausgeliefert.
 | PROJ-5 | Messprotokoll (CSV) | CSV mit PC-Zeitstempel (`monitor --csv`, GUI), Standard `~/umwelt_messwerte.csv` | P0 | PROJ-4 | In Progress | [PROJ-5](PROJ-5-messprotokoll-csv.md) | 2026-10-02 |
 | PROJ-6 | Schwellwerte, Alarm, Einstellungen | Messintervall/Schwellwerte/Einheiten im EEPROM, Alarm mit Hysterese (Farbe, optional Piezo), Konfiguration am Gerät und PC, Reset auf Defaults | P1 | PROJ-3, PROJ-4 | In Progress | [PROJ-6](PROJ-6-schwellwerte-alarm-einstellungen.md) | 2026-10-02 |
 | PROJ-7 | Verlauf auf dem Gerät | Kurzer RAM-Verlauf/Trend-Anzeige (nur wenn RAM/Flash reichen) | P2 | PROJ-2 | Roadmap | — | 2026-10-02 |
+| PROJ-8 | Control Panel (PySide6) | Desktop-Panel: Live-Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungen, dauerhaftes SQLite-Log, Verlauf, CSV-Export | P0 | PROJ-4, PROJ-5 | In Review | [PROJ-8](PROJ-8-control-panel.md) | 2026-10-02 |
 
 <!-- Add features above this line -->
 
@@ -37,4 +38,4 @@ Noch keine Features ausgeliefert.
 4. Offene Entscheidungen: BME680-Bibliothek vs. eigener Treiber (in `/architecture` PROJ-2),
    Pegel/Adresse des BME680-Moduls (Hardware prüfen)
 
-## Next Available ID: PROJ-8
+## Next Available ID: PROJ-9

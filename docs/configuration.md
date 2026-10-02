@@ -5,6 +5,8 @@
 | Serieller Port | `--port COM9` > Umgebungsvariable `UMWELT_PORT=COM9` > automatisch (USB-VID 0x2341) |
 | Verbinden | DTR/RTS aus — das Öffnen des Ports startet den Uno nicht neu |
 | Messprotokoll (CSV) | Standard `~/umwelt_messwerte.csv` (außerhalb des Repos, lokal; Aufbewahrung entscheidet der Nutzer) |
+| Control Panel: Messwert-Datenbank | Standard `%LOCALAPPDATA%\Umgebungssensoren\messwerte.db` (platformdirs `user_data_dir`, lokal, nicht im Repo); anders mit `umwelt-panel --db DATEI` |
+| Control Panel: Logdatei | `%LOCALAPPDATA%\Umgebungssensoren\Logs\panel.log` (rotierend, 3 × 1 MB) |
 | arduino-cli | `C:\Program Files\Arduino CLI\arduino-cli.exe` (nicht im PATH) |
 
 ## PC-Tool (`umwelt`)
@@ -37,3 +39,18 @@ mit `--interval S` fragt er alle S Sekunden per `READ` ab (das Gerät behält se
   werden mit der nächsten Zeile nachgetragen
 - Die Datei wächst unbegrenzt; Löschen/Archivieren entscheidet der Nutzer. Nie ins Repository legen
   (`.gitignore`: `*messwerte*.csv`)
+
+## Control Panel (`umwelt-panel`, PROJ-8)
+Installation: `pip install -e "pc[panel]"` (PySide6, platformdirs). Start: `umwelt-panel` oder
+`python -m umwelt_panel`; Optionen `--port PORT` (sonst `UMWELT_PORT`, sonst automatisch) und `--db DATEI`.
+
+- **Datenbank (SQLite):** Tabelle `measurements(ts_utc, t, rh, p, gas, alarm)` — `ts_utc` = PC-Zeit als
+  Unix-Millisekunden (UTC), Werte als Ganzzahlen der SPEC (0,01 °C, 0,01 %rF, 0,1 hPa, Ω), ungültig = NULL;
+  Tabelle `settings` (automatisch aufzeichnen, Port, Ansicht, Fenstergröße). Schema-Version in
+  `PRAGMA user_version` (aktuell 1); eine Datei einer neueren Version wird abgelehnt, nicht verändert.
+- **Aufzeichnung:** standardmäßig an („Messwerte automatisch aufzeichnen"), jede `EVT DATA`-Messung wird
+  gespeichert, solange das Gerät verbunden ist. Anzahl, Größe und Pfad stehen unten im Fenster.
+- **Löschen:** nur über „Verlauf → Log löschen …" mit Rückfrage. Keine automatische Aufbewahrungsfrist.
+- **CSV-Export:** „Verlauf → CSV exportieren …" (oder Strg+E) für den gewählten Zeitraum (letzte Stunde,
+  24 Stunden, 7 Tage, alles); Format identisch zum Messprotokoll oben (`;`, UTF-8 mit BOM, Kopfzeile,
+  Dezimalkomma, Zeit ISO 8601 mit Offset, ungültig leer). Standardordner: Dokumente.

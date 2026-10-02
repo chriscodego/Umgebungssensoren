@@ -35,6 +35,23 @@ python -m pytest pc/tests -m hardware
 `arduino-cli.exe` liegt unter `C:\Program Files\Arduino CLI\` (nicht im PATH).
 Der Port wird automatisch gefunden (USB-VID 0x2341); sonst `--port COM9` oder `UMWELT_PORT=COM9`.
 
+## Control Panel
+
+Desktop-Oberfläche (PySide6) analog zum „RFB Controll Panel": vier Wert-Kacheln mit Verlaufskurve,
+Verbindungsbanner (Port, Firmware), Alarmband mit „Quittieren", Einstellungsdialog (Intervall,
+Temperatur-Offset, Schwellwerte, Piezo, Standardwerte, Uhr) und ein **dauerhaftes Messwert-Log in
+SQLite** mit Verlaufsansicht (1 h / 24 h / 7 Tage / alles) und CSV-Export.
+
+```bash
+pip install -e "pc[panel]"       # PySide6 + platformdirs (die CLI bleibt pyserial-only)
+umwelt-panel                     # oder: python -m umwelt_panel [--port COM9] [--db DATEI]
+```
+
+Die Datenbank liegt standardmäßig in `%LOCALAPPDATA%\Umgebungssensoren\messwerte.db` (lokal, nicht im
+Repo); sie wächst unbegrenzt und wird nur nach Rückfrage gelöscht. Details: `docs/configuration.md`.
+
+![Control Panel](docs/screenshots/panel.png)
+
 ## The Workflow
 
 | Step | Skill | What it does |
