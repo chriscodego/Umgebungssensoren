@@ -51,12 +51,18 @@ Befund 2026-10-02 (PROJ-1):
 - Qt `offscreen` hat unter Windows keine Schriften → Screenshots mit `QT_QPA_FONTDIR=C:/Windows/Fonts`
 - pytest-qt bricht ohne Qt-Binding den ganzen Testlauf ab → in `pyproject.toml` per `-p no:pytest-qt` aus, `conftest.py` lädt es nur mit PySide6
 - Bosch-Feuchtekompensation (int32) läuft bei gesättigten Rohwerten (> 100 %rF) über → vorher abfangen (in `sensor.cpp` umgesetzt)
+- PyInstaller-Fenster-Bundle (`console=False`): `sys.stdout`/`sys.stderr` sind `None` → `app.py` leitet sie aufs Null-Gerät um (sonst stirbt `--version`/`--help`)
+- `installer.iss` muss UTF-8 **mit BOM** bleiben (sonst Umlaut-Salat); die `AppId`-GUID nie ändern
+- Release-Tags des Control Panels heißen `panel-v<Version>` (`packaging/release.py`); `vX.Y.Z` gehört dem Gesamt-Release
 
 ## 6. Speicherbudget
 | Stand | Flash | RAM (global) |
 |---|---|---|
 | FW 0.1.0 (PROJ-2/3/6), 2026-10-02 | 31 506 B (97,7 %) | 806 B (39 %) |
+| PROJ-10 Arbeitsstand (nicht geflasht), 2026-10-02 | 32 610 B (101 %, passt nicht) | 1 341 B (65 %) |
+
 Mit `Wire` lag der Build bei 32 524 B (> 100 %). > 95 % ist ein Architekturthema: PROJ-7 nur mit Einsparungen.
+PROJ-10 (Verlaufsdiagramm) kostet ≈ 1,2 KB Flash und 535 B RAM; ohne Streichen der Diagnosebefehle (`DEBUG TOUCH` ≈ 400 B, `TESTPATTERN` ≈ 330 B, `CAL SHOW` ≈ 190 B) passt es nicht → Nutzerentscheid offen.
 
 ## 7. EEPROM
 Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-history.md`. Schwellwert „OFF“ = −32768.
@@ -82,3 +88,5 @@ Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-histor
 | 2026-10-02 | PROJ-8 | Control Panel `umwelt_panel` (PySide6, Extra `panel`): Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungsdialog, SQLite-Log (`user_version` 1) mit Verlauf und CSV-Export über `messlog.csv_text`; Serial im QThread; pytest-qt nur mit PySide6 geladen |
 | 2026-10-02 | PROJ-2 | Anzeige: Seitenleiste unten entfernt, Kacheln 80×58 füllen den Schirm, Einstellungen über Tipp auf die obere Leiste, „Zurück“-Taste; Flash 31 426 B (97 %) |
 | 2026-10-02 | PROJ-2/3/6/8 | FW 0.1.0 auf COM9 geflasht; Hardware-Smoke-Test (PING/STATUS/READ/CFG/STREAM/ACK/TIME, Alarm nach 2 Messungen, Fehlercodes 1/2/3/7) und 7 Hardware-Tests grün; Control Panel (PROJ-8) startet. Optische Abnahme des Displays und Touch-Bedienung am Gerät offen |
+| 2026-10-02 | PROJ-10 | Verlaufsseite (RAM-Ring `history.*`, 64 × 30 s je Wert, Diagramm in Schritten, Kacheltipp öffnet) umgesetzt, aber Build 32 610 B > Flash; Diagnosebefehle streichen = Nutzerentscheid offen; noch nicht committet/geflasht. Ohne Funktionsverlust gespart: `display_fmtNum` kompakter, `EVT TOUCH`-Ausgabe als Schleife |
+| 2026-10-02 | PROJ-9 | Control Panel installierbar (`packaging/`: PyInstaller One-Dir ohne UPX, Inno Setup pro Benutzer, Installer `UmgebungssensorenPanel-Setup-0.1.0.exe` 33,6 MB) und Updater wie RFB PROJ-10: `latest.json` im NAS-Ordner `01_Interna\05_Software\Umgebungssensoren` (Override `UMWELT_UPDATE_DIR`), 5-s-Proben, SHA-256-geprüfte Kopie nach `%TEMP%\umwelt-panel-update`, Hinweis + Menü „Nach Updates suchen“; nur `release.py` schreibt in den Ordner; 56 neue Tests |
