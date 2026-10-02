@@ -1,0 +1,32 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+permissions:
+  contents: read
+jobs:
+  firmware:
+    name: Firmware compile (arduino:avr:uno)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - run: arduino-cli core update-index
+      - run: arduino-cli core install arduino:avr
+      - run: arduino-cli lib install "Adafruit GFX Library" "Adafruit ST7735 and ST7789 Library"
+      - run: arduino-cli compile --fqbn arduino:avr:uno --warnings all firmware/Umgebungssensoren
+
+  pc:
+    name: PC tool host tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e "pc[dev]"
+      # Hardware-in-the-loop tests need the device on a local COM port — never in CI.
+      - run: python -m pytest pc/tests -m "not hardware"

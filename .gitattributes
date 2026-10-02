@@ -1,0 +1,13 @@
+# Normalize line endings in the repo; keep native endings in the working tree.
+* text=auto
+
+# Shell scripts and CI files must stay LF.
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary assets (datasheets, photos of the setup).
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
