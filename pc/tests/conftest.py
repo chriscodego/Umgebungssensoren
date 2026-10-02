@@ -18,6 +18,8 @@ from umwelt_ctl.device import UmweltDevice  # noqa: E402  (after sys.path setup)
 # Control Panel GUI tests (marker ``gui``) run headless. pytest-qt is disabled in
 # pyproject.toml and only loaded here when PySide6 (extra "panel") is installed.
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+if os.path.isdir("C:/Windows/Fonts"):  # offscreen Qt finds no fonts on its own on Windows
+    os.environ.setdefault("QT_QPA_FONTDIR", "C:/Windows/Fonts")
 try:
     import PySide6  # noqa: F401
 except ImportError:  # pragma: no cover - plain `pc[dev]` install
@@ -243,6 +245,23 @@ def _no_real_serial_port(request, monkeypatch):
             raise AssertionError("Host-Test wollte einen echten seriellen Port öffnen")
 
     monkeypatch.setattr(serial, "Serial", _Refuse)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_update_share(monkeypatch, tmp_path_factory):
+    """Safety net (PROJ-9): no test ever probes the institute share or a network drive.
+
+    The production search reads these module globals at call time, so diverting them here
+    covers every MainWindow built with the default update service.
+    """
+    monkeypatch.delenv("UMWELT_UPDATE_DIR", raising=False)
+    try:
+        from umwelt_panel.core.services import update_service
+    except ImportError:  # pragma: no cover
+        return
+    monkeypatch.setattr(update_service, "UNC_UPDATE_FOLDER",
+                        str(tmp_path_factory.getbasetemp() / "kein-institutslaufwerk"))
+    monkeypatch.setattr(update_service, "detect_network_drives", lambda: [])
 
 
 @pytest.fixture

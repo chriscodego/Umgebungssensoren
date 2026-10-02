@@ -35,7 +35,22 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def _ensure_std_streams() -> None:
+    """A windowed PyInstaller bundle has no console: ``sys.stdout``/``stderr`` are ``None``.
+
+    argparse (``--help``/``--version``) and logging write there; send it to the null
+    device instead of crashing. Nothing is written next to the executable.
+    """
+    import os
+
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _ensure_std_streams()
     args = build_parser().parse_args(argv)
 
     from PySide6.QtCore import QLocale
@@ -90,6 +105,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     window = MainWindow(controller, log_service, settings, port=args.port)
     window.show()
     window.start()
+    window.schedule_update_check()
     return app.exec()
 
 

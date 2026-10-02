@@ -5,6 +5,8 @@
 * „Live" — four tiles (temperature, humidity, pressure, gas + trend) with sparklines.
 * „Verlauf" — :class:`~umwelt_panel.ui.history_view.HistoryView` (database, export, clear).
 * Log strip — automatic recording on/off, number of values, size and path of the database.
+* Update hint (PROJ-9) — non-modal bar after the silent startup check; „Nach Updates
+  suchen" in the menu bar searches at once.
 
 No SQL and no serial I/O in here: the device goes through
 :class:`~umwelt_panel.ui.device_controller.DeviceController`, the database through the
@@ -40,6 +42,11 @@ from umwelt_panel.core.models import LogStats, format_count, format_size
 from umwelt_panel.core.services.device_session import ConnectInfo
 from umwelt_panel.core.services.log_service import MeasurementLog
 from umwelt_panel.core.services.settings_service import SettingsService
+from umwelt_panel.core.services.update_service import (
+    AvailableUpdate,
+    UpdateService,
+    build_update_service,
+)
 from umwelt_panel.core.trend import GasTrend
 from umwelt_panel.ui import dialogs
 from umwelt_panel.ui.device_controller import (
@@ -52,8 +59,10 @@ from umwelt_panel.ui.history_view import HistoryView, error_text
 from umwelt_panel.ui.metrics import METRICS
 from umwelt_panel.ui.settings_dialog import SettingsDialog
 from umwelt_panel.ui.tasks import run_in_pool, wait_for_pool
+from umwelt_panel.ui.update_controller import UpdateController
 from umwelt_panel.ui.widgets.alarm_banner import AlarmBanner
 from umwelt_panel.ui.widgets.connection_banner import ConnectionBanner
+from umwelt_panel.ui.widgets.update_notice import UpdateNotice
 from umwelt_panel.ui.widgets.value_box import ValueBox
 
 log = logging.getLogger(__name__)
@@ -61,6 +70,8 @@ log = logging.getLogger(__name__)
 BLINK_MS = 500
 STATS_MS = 5000
 MIN_WIDTH, MIN_HEIGHT = 900, 620
+#: The automatic update check waits this long after the window is shown (PROJ-9).
+STARTUP_UPDATE_CHECK_DELAY_MS = 1_000
 
 #: alarm flags that mark a tile (SPEC: 1 T_HI, 2 T_LO, 4 RH_HI, 8 RH_LO)
 TILE_ALARMS = {"t": p.ALARM_T_HI | p.ALARM_T_LO, "rh": p.ALARM_RH_HI | p.ALARM_RH_LO}
@@ -79,11 +90,19 @@ def load_stylesheet() -> str:
 class MainWindow(QMainWindow):
     def __init__(self, controller: DeviceController, log_service: MeasurementLog,
                  settings: SettingsService, *, port: str | None = None,
+                 updates: UpdateService | None = None,
                  parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._ctl = controller
         self._log = log_service
         self._settings = settings
+        # Cheap to build: nothing touches the share until a check runs, and that only
+        # ever happens in the thread pool.
+        self._update_service = updates if updates is not None else build_update_service()
+        self.update_controller = UpdateController(self._update_service, self, parent=self)
+        self.update_controller.application_should_quit.connect(self.quit_for_update)
+        self.update_controller.update_found.connect(self._on_update_found)
+        self.update_controller.copy_started.connect(self._on_update_copy_started)
         self._port = port if port is not None else (settings.port() or "")
         self._closing = False
 
@@ -131,6 +150,9 @@ class MainWindow(QMainWindow):
         root.addWidget(self.banner)
         self.alarm_banner = AlarmBanner(central)
         root.addWidget(self.alarm_banner)
+        self.update_notice = UpdateNotice(self._update_service.installed_version, central)
+        self.update_notice.install_requested.connect(self._on_notice_install)
+        root.addWidget(self.update_notice)
 
         self.tabs = QTabWidget(central)
         live = QWidget(self.tabs)
@@ -197,6 +219,16 @@ class MainWindow(QMainWindow):
         for a in (self.settings_action, self.ack_action, self.sync_action):
             dev_menu.addAction(a)
 
+        # A top-level entry right of „Gerät" (as in the RFB Control Panel): one click
+        # searches at once, there is no submenu behind it.
+        self.update_action = QAction(self.tr("Nach &Updates suchen"), self)
+        self.update_action.setObjectName("updateMenuAction")
+        self.update_action.setToolTip(self.tr(
+            "Sucht im Update-Ordner auf dem Institutslaufwerk nach einer neueren Version. "
+            "Installiert wird erst nach Ihrer Bestätigung."))
+        self.update_action.triggered.connect(self.update_controller.check_for_updates)
+        bar.addAction(self.update_action)
+
         help_menu = bar.addMenu(self.tr("&Hilfe"))
         about = QAction(self.tr("Ü&ber …"), self)
         about.triggered.connect(self._about)
@@ -234,6 +266,14 @@ class MainWindow(QMainWindow):
         """Begin auto-connecting; call after ``show()`` (errors land in a visible window)."""
         self._ctl.start(self._port)
         self.refresh_stats()
+
+    def schedule_update_check(self, delay_ms: int = STARTUP_UPDATE_CHECK_DELAY_MS) -> None:
+        """Queue the silent startup check (PROJ-9). Called once the window is visible.
+
+        Returns at once: the timer fires on the event loop and the search itself runs in
+        the thread pool, so even a hanging network drive cannot delay the start.
+        """
+        QTimer.singleShot(delay_ms, self.update_controller.check_in_background)
 
     # ------------------------------------------------------------------ geometry
 
@@ -314,6 +354,28 @@ class MainWindow(QMainWindow):
         dialogs.show_info(self, self.tr("Über {0}").format(APP_NAME), self.tr(
             "{0} Control Panel {1}\n\nMesswert-Datenbank:\n{2}\n\nProtokoll: docs/SPEC.md "
             "(Version 1).").format(APP_NAME, __version__, self._log.path))
+
+    @Slot(object)
+    def _on_update_found(self, update: AvailableUpdate) -> None:
+        """The startup check found a newer version: a hint, never a modal dialog."""
+        self.update_notice.show_update(update)
+
+    @Slot(object)
+    def _on_notice_install(self, update: AvailableUpdate) -> None:
+        self.update_controller.install(update)
+
+    @Slot()
+    def _on_update_copy_started(self) -> None:
+        self.update_notice.setVisible(False)
+
+    @Slot()
+    def quit_for_update(self) -> None:
+        """Close for the installer to take over — Windows cannot replace a running EXE.
+
+        The regular close path runs: geometry saved, port closed in the worker thread.
+        """
+        log.info("Closing for the update installer")
+        self.close()
 
     def _say(self, text: str) -> None:
         self.statusBar().showMessage(text, 8000)

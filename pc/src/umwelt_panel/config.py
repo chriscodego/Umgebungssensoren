@@ -15,6 +15,14 @@ from umwelt_panel import APP_NAME
 DB_FILENAME = "messwerte.db"
 LOG_FILENAME = "panel.log"
 
+#: PROJ-9: overrides the update folder search (tests and special setups).
+UPDATE_DIR_ENV = "UMWELT_UPDATE_DIR"
+
+
+def update_dir_override() -> str:
+    """``UMWELT_UPDATE_DIR`` if set, else ``""`` (then UNC path and network drives)."""
+    return os.environ.get(UPDATE_DIR_ENV, "").strip()
+
 
 def data_dir() -> Path:
     from platformdirs import user_data_path  # lazy: core tests do not need platformdirs
