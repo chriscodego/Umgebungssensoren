@@ -27,6 +27,7 @@ Noch keine Features ausgeliefert.
 | PROJ-6 | Schwellwerte, Alarm, Einstellungen | Messintervall/Schwellwerte/Einheiten im EEPROM, Alarm mit Hysterese (Farbe, optional Piezo), Konfiguration am Gerät und PC, Reset auf Defaults | P1 | PROJ-3, PROJ-4 | In Review | [PROJ-6](PROJ-6-schwellwerte-alarm-einstellungen.md) | 2026-10-02 |
 | PROJ-7 | Verlauf auf dem Gerät | Kurzer RAM-Verlauf/Trend-Anzeige (nur wenn RAM/Flash reichen) | P2 | PROJ-2 | Roadmap | — | 2026-10-02 |
 | PROJ-8 | Control Panel (PySide6) | Desktop-Panel: Live-Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungen, dauerhaftes SQLite-Log, Verlauf, CSV-Export | P0 | PROJ-4, PROJ-5 | In Review | [PROJ-8](PROJ-8-control-panel.md) | 2026-10-02 |
+| PROJ-9 | Installer + Updater (Control Panel) | Windows-Installer (PyInstaller + Inno Setup, pro Benutzer) und Update-Suche im NAS-Ordner `05_Software\Umgebungssensoren` (latest.json, SHA-256), analog RFB | P1 | PROJ-8 | In Review | [PROJ-9](PROJ-9-installer-updater.md) | 2026-10-02 |
 
 <!-- Add features above this line -->
 
@@ -38,4 +39,4 @@ Noch keine Features ausgeliefert.
 4. Offene Entscheidungen: BME680-Bibliothek vs. eigener Treiber (in `/architecture` PROJ-2),
    Pegel/Adresse des BME680-Moduls (Hardware prüfen)
 
-## Next Available ID: PROJ-9
+## Next Available ID: PROJ-11

@@ -7,6 +7,8 @@
 | Messprotokoll (CSV) | Standard `~/umwelt_messwerte.csv` (außerhalb des Repos, lokal; Aufbewahrung entscheidet der Nutzer) |
 | Control Panel: Messwert-Datenbank | Standard `%LOCALAPPDATA%\Umgebungssensoren\messwerte.db` (platformdirs `user_data_dir`, lokal, nicht im Repo); anders mit `umwelt-panel --db DATEI` |
 | Control Panel: Logdatei | `%LOCALAPPDATA%\Umgebungssensoren\Logs\panel.log` (rotierend, 3 × 1 MB) |
+| Control Panel: Update-Ordner | `\\131.234.237.14\Gutmann\01_Interna\05_Software\Umgebungssensoren`, sonst jedes Netzlaufwerk + `01_Interna\05_Software\Umgebungssensoren`; vorrangig Umgebungsvariable `UMWELT_UPDATE_DIR` (siehe unten) |
+| Control Panel: Installation | `%LOCALAPPDATA%\Programs\Umgebungssensoren Control Panel\` (Installer, siehe [installation.md](installation.md)) |
 | arduino-cli | `C:\Program Files\Arduino CLI\arduino-cli.exe` (nicht im PATH) |
 
 ## PC-Tool (`umwelt`)
@@ -54,3 +56,32 @@ Installation: `pip install -e "pc[panel]"` (PySide6, platformdirs). Start: `umwe
 - **CSV-Export:** „Verlauf → CSV exportieren …" (oder Strg+E) für den gewählten Zeitraum (letzte Stunde,
   24 Stunden, 7 Tage, alles); Format identisch zum Messprotokoll oben (`;`, UTF-8 mit BOM, Kopfzeile,
   Dezimalkomma, Zeit ISO 8601 mit Offset, ungültig leer). Standardordner: Dokumente.
+
+## Update-Ordner (PROJ-9)
+Das Control Panel liest — schreibt nie — einen Ordner auf dem Institutslaufwerk: `latest.json` plus die Installer
+`UmgebungssensorenPanel-Setup-<Version>.exe` (ältere bleiben als Rückweg liegen). Suchreihenfolge, der erste Ordner
+mit gültiger `latest.json` gewinnt:
+
+1. Umgebungsvariable **`UMWELT_UPDATE_DIR`** (z. B. `set UMWELT_UPDATE_DIR=D:\Test\Updates` für Tests oder
+   Sonderfälle)
+2. UNC-Pfad `\\131.234.237.14\Gutmann\01_Interna\05_Software\Umgebungssensoren` (ohne Laufwerksbuchstaben)
+3. jeder verbundene **Netz**laufwerksbuchstabe + `01_Interna\05_Software\Umgebungssensoren`
+
+Jede Probe hat ein Zeitlimit von 5 s und läuft im Hintergrund; ein getrenntes Laufwerk blockiert das Panel nicht.
+Kein Zugangsdatum wird gespeichert — die Freigabe wird mit der Windows-Anmeldung erreicht. Kein Internetzugriff.
+
+`latest.json` (UTF-8, höchstens 64 KB):
+
+```json
+{
+  "version": "0.2.0",
+  "installer": "UmgebungssensorenPanel-Setup-0.2.0.exe",
+  "sha256": "<64 Hex-Zeichen>",
+  "published": "2026-10-02T12:00:00Z",
+  "notes": "- Änderung 1\n- Änderung 2"
+}
+```
+
+Der Installer wird nach `%TEMP%\umwelt-panel-update\` kopiert, gegen `sha256` geprüft und erst dann gestartet; das
+Panel beendet sich dafür. Beim Start prüft das Panel still (nur bei einer neueren Version erscheint ein Hinweis);
+„Nach Updates suchen“ in der Menüleiste antwortet immer. Nur `packaging/release.py` schreibt in den Update-Ordner.

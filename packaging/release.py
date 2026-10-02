@@ -90,7 +90,8 @@ def log(message: str) -> None:
 
 
 def capture(command: list[str], *, check: bool = True) -> str:
-    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
+    result = subprocess.run(command, cwd=ROOT, capture_output=True, check=False,
+                            encoding="utf-8", errors="replace")  # git speaks UTF-8
     if check and result.returncode != 0:
         raise ReleaseError(
             f"Befehl fehlgeschlagen: {' '.join(command)}\n{result.stdout}{result.stderr}".strip()
@@ -139,7 +140,8 @@ def check_tag_free(tag: str, *, check_origin: bool) -> None:
         ["git", "ls-remote", "--tags", "origin", tag],
         cwd=ROOT,
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
     if result.returncode != 0:
