@@ -27,6 +27,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e "pc[dev]"
+      - run: pip install -e "pc[dev,panel]"
       # Hardware-in-the-loop tests need the device on a local COM port — never in CI.
       - run: python -m pytest pc/tests -m "not hardware"

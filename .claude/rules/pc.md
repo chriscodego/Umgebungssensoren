@@ -65,6 +65,14 @@ decision → ask the user. A live chart is drawn with a Tk `Canvas`, not a plott
   where it is written, retention is their decision
 - Flush after each row so a crash does not lose data
 
+## Control Panel (PROJ-8, user decision 2026-10-02)
+Analog to the sibling project `RFB Controll Panel` (`C:/Users/gerkench/OneDrive/Documents/15_Code/RFB Controll Panel`) the user wants a
+desktop GUI that logs the data. Approved additions, **only for the panel** (the CLI/`umwelt_ctl` stays pyserial-only;
+panel dependencies live in the optional extra `panel`): **PySide6** (GUI), SQLite via stdlib `sqlite3` (no SQLAlchemy/Alembic),
+`platformdirs` (data/log paths). Package `umwelt_panel` (`pc/src/umwelt_panel/`) with the RFB layering: `core/` and `data/` import no Qt;
+`ui/` only calls services; reuse `umwelt_ctl.protocol`/`device` for the serial link (no second protocol parser). Serial I/O off
+the GUI thread (QThread/worker + signals). The Tk GUI (`umwelt_ctl.gui`) stays until the panel replaces it (user decision).
+
 ## Code quality
 - Type hints on public functions; `ruff check pc` clean
 - `logging` instead of `print()` in library code (CLI output via `print` only in the CLI layer)

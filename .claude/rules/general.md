@@ -11,7 +11,7 @@ Two small programs bound by one contract:
 - **Contract:** the serial protocol in `docs/SPEC.md` (see `.claude/rules/protocol.md`).
 
 Never introduce web-app or server patterns here: no web server, no REST API, no
-database server, no cloud service/MQTT, no Qt/PySide (Tkinter is the chosen GUI toolkit).
+database server, no cloud service/MQTT, no Qt/PySide outside the Control Panel (PROJ-8, `umwelt_panel`, user decision 2026-10-02; the CLI stays Tk-/stdlib-only).
 If a task seems to need one of these, it is the wrong task for this project — ask the user.
 
 ## New Project Detection (MANDATORY)
