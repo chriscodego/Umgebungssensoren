@@ -2,6 +2,7 @@
 
 #include <SPI.h>
 
+#include "history.h"
 #include "protocol.h"
 #include "sensor.h"
 #include "signal.h"
@@ -56,25 +57,21 @@ void display_button(const Rect &r, const char *label_P, uint16_t face) {
 }
 
 void display_fmtNum(char *out, uint8_t width, int32_t v, uint8_t dec) {
-  char tmp[12];
-  uint8_t i = sizeof(tmp) - 1;
-  tmp[i] = '\0';
-  bool neg = v < 0;
-  uint32_t a = neg ? (uint32_t)(-v) : (uint32_t)v;
-  if (dec) {
-    tmp[--i] = (char)('0' + a % 10);
-    a /= 10;
-    tmp[--i] = ',';
-  }
+  char tmp[13];  // "-2147483648,0" worst case without the terminator: 12 chars
+  char *p = tmp + sizeof(tmp) - 1;
+  *p = '\0';
+  uint32_t a = v < 0 ? 0UL - (uint32_t)v : (uint32_t)v;
+  uint8_t n = 0;
   do {
-    tmp[--i] = (char)('0' + a % 10);
+    *--p = (char)('0' + a % 10);
     a /= 10;
-  } while (a != 0 && i > 1);
-  if (neg) tmp[--i] = '-';
-  uint8_t len = (uint8_t)(sizeof(tmp) - 1 - i);
+    if (++n == dec) *--p = ',';
+  } while (a != 0 || n <= dec);  // with a decimal: at least "0,d"
+  if (v < 0) *--p = '-';
+  uint8_t len = (uint8_t)(tmp + sizeof(tmp) - 1 - p);
   uint8_t pad = len < width ? width - len : 0;
   memset(out, ' ', pad);
-  strcpy(out + pad, tmp + i);
+  strcpy(out + pad, p);
 }
 
 // ------------------------------------------------------------------ overview
@@ -235,6 +232,108 @@ void display_overviewUpdate(uint32_t now) {
       s_vis[i] = vis;
       drawTile(i, vis, full);
       return;  // at most one tile per pass
+    }
+  }
+}
+
+// The tiles fill the screen below TILE_Y in a 2 x 2 grid (same geometry as tileRect()).
+uint8_t display_tileAt(int16_t x, int16_t y) {
+  if (y < TILE_Y) return 0xFF;
+  return (uint8_t)((x >= TILE_W ? 1 : 0) | (y >= TILE_Y + TILE_H ? 2 : 0));
+}
+
+// ------------------------------------------------------------------ history graph (PROJ-10)
+// Title row: value name + time span; left column: axis max (top) / min (bottom); plot frame =
+// GRAPH_X/Y/W/H (also the tap target GRAPH_AREA in ui.cpp). The plot is redrawn left to right in steps:
+// each step clears the columns of one segment and draws it (no full clear, no flicker).
+const int16_t PLOT_X = GRAPH_X + 1, PLOT_Y = GRAPH_Y + 1;
+const int16_t PLOT_W = GRAPH_W - 2, PLOT_H = GRAPH_H - 2;
+
+static uint8_t s_gValue = 0xFF;  // value whose title is on screen
+static uint8_t s_gGen;            // history generation of the plot on screen
+static uint8_t s_gSeg = GRAPH_POINTS;  // next segment to draw (GRAPH_POINTS = done)
+static bool s_gDirty;             // plot must restart
+static int16_t s_gLo, s_gHi;      // axis of the plot being drawn
+
+void display_graphInvalidate() { s_gValue = 0xFF; }
+
+static int16_t plotX(uint8_t i) { return PLOT_X + (int16_t)((uint16_t)i * (PLOT_W - 1) / (GRAPH_POINTS - 1)); }
+
+static int16_t plotY(int16_t v) {
+  return PLOT_Y + PLOT_H - 1 - (int16_t)((int32_t)(v - s_gLo) * (PLOT_H - 1) / (s_gHi - s_gLo));
+}
+
+static void graphLabel(int16_t y, int16_t v) {
+  char buf[8];
+  if (v == GRAPH_GAP) {
+    strcpy_P(buf, PSTR("    --"));
+  } else {
+    display_fmtNum(buf, 6, v, 1);
+  }
+  display_text(0, y, 1, COL_FG, COL_BG, buf);
+}
+
+// Start a new plot: axis from the min/max of the valid points, labels.
+static void graphStart(uint8_t value) {
+  int16_t lo = 32767, hi = GRAPH_GAP;
+  for (uint8_t i = 0; i < GRAPH_POINTS; i++) {
+    int16_t v = history_get(value, i);
+    if (v == GRAPH_GAP) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  if (hi == GRAPH_GAP) {
+    lo = GRAPH_GAP;  // no data: labels "--", empty plot
+  } else if (hi - lo < GRAPH_MIN_SPAN) {  // flat line: centre it on a minimum span
+    lo -= (GRAPH_MIN_SPAN - (hi - lo)) / 2;
+    hi = lo + GRAPH_MIN_SPAN;
+  }
+  s_gLo = lo;
+  s_gHi = hi;
+  graphLabel(GRAPH_Y, hi);
+  graphLabel(GRAPH_Y + GRAPH_H - 8, lo);
+  s_gSeg = 0;
+}
+
+void display_graphUpdate(uint8_t value) {
+  if (value != s_gValue) {  // page entered or value switched: title, frame, new plot
+    s_gValue = value;
+    char buf[12];
+    memset(buf, ' ', 11);
+    buf[11] = '\0';
+    strcpy_P(buf, (const char *)pgm_read_ptr(&TILE_LABEL[value]));
+    buf[strlen(buf)] = ' ';  // fixed width: pads over a longer previous title
+    display_text(2, 2, 1, COL_FG, COL_BG, buf);
+    s_tft.print(GRAPH_POINTS * GRAPH_STEP_S / 60);  // time span of the ring
+    s_tft.print(F(" min"));
+    s_tft.drawRect(GRAPH_X, GRAPH_Y, GRAPH_W, GRAPH_H, COL_GREY);
+    s_gDirty = true;
+  }
+  uint8_t gen = history_generation();
+  if (gen != s_gGen) {  // new point (also while drawing): restart with the new data
+    s_gGen = gen;
+    s_gDirty = true;
+  }
+  if (s_gDirty) {
+    s_gDirty = false;
+    graphStart(value);
+    return;
+  }
+  // One segment = the columns from point i (exclusive, except i = 0) to point i + 1: clear
+  // them, then draw the line; a point next to a gap is drawn as a single pixel.
+  for (uint8_t n = 0; n < GRAPH_SEG_PER_PASS && s_gSeg < GRAPH_POINTS; n++, s_gSeg++) {
+    uint8_t i = s_gSeg;
+    bool last = i == GRAPH_POINTS - 1;
+    int16_t x0 = plotX(i), x1 = last ? x0 : plotX(i + 1);
+    int16_t cx = i == 0 ? x0 : x0 + 1;
+    s_tft.fillRect(cx, PLOT_Y, x1 - cx + 1, PLOT_H, COL_BG);  // width 0 for the last point
+    int16_t a = history_get(value, i), b = last ? GRAPH_GAP : history_get(value, i + 1);
+    if (a == GRAPH_GAP) continue;
+    int16_t ya = plotY(a);
+    if (b == GRAPH_GAP) {
+      s_tft.drawPixel(x0, ya, COL_WARN);
+    } else {
+      s_tft.drawLine(x0, ya, x1, plotY(b), COL_WARN);
     }
   }
 }

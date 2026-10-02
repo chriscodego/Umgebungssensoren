@@ -33,6 +33,11 @@ void display_center(int16_t cx, int16_t y, uint8_t size, uint16_t fg, uint16_t b
 // spaces to `width` chars (out: width + 1 bytes).
 void display_fmtNum(char *out, uint8_t width, int32_t v, uint8_t dec);
 
-// ---- overview page: status line + 2 x 2 value tiles above the page bar
+// ---- overview page: status line + 2 x 2 value tiles
 void display_overviewInvalidate();         // full redraw (in steps) on the next updates
 void display_overviewUpdate(uint32_t now); // redraw what changed (at most one tile per call)
+uint8_t display_tileAt(int16_t x, int16_t y);  // tile index 0..3 under a tap, 0xFF = none
+
+// ---- history graph page (PROJ-10): title, min/max labels, plot of history.* in steps
+void display_graphInvalidate();            // title, frame and plot on the next updates
+void display_graphUpdate(uint8_t value);   // redraw what changed (a few segments per call)

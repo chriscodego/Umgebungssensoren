@@ -55,9 +55,6 @@ static uint32_t s_lastRearm = 0;
 
 const uint8_t MAX_AVG_SAMPLES = 16;  // keeps the sums within uint16_t
 
-static TouchDebug s_dbg;
-static bool s_dbgNew = false;
-
 static int16_t __attribute__((noinline)) mapAxis(int32_t raw, int16_t lo, int16_t hi, int16_t size) {
   int32_t span = (int32_t)hi - lo;
   if (span == 0) return 0;
@@ -92,11 +89,6 @@ static bool sample(int16_t &rx, int16_t &ry) {
   if (digitalRead(PIN_TOUCH_IRQ) != LOW) return false;
   int16_t px, py, pz;
   readRaw(px, py, pz);
-  s_dbg.rawX = px;
-  s_dbg.rawY = py;
-  s_dbg.z = pz;
-  mapPoint(px, py, s_dbg.x, s_dbg.y);
-  s_dbgNew = true;
   if (pz < TOUCH_Z_MIN) return false;
   if (px < TOUCH_RAW_MIN || px > TOUCH_RAW_MAX || py < TOUCH_RAW_MIN || py > TOUCH_RAW_MAX) {
     return false;
@@ -118,13 +110,6 @@ void input_suppress(uint32_t now) {
   s_state = ST_IDLE;
   s_count = 0;
   s_hn = 0;
-}
-
-bool input_debugSample(TouchDebug &d) {
-  if (!s_dbgNew) return false;
-  s_dbgNew = false;
-  d = s_dbg;
-  return true;
 }
 
 // Hit box = drawn rect + TOUCH_HIT_PAD; a rect near the glass edge extends to the edge.

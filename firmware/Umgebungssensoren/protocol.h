@@ -22,9 +22,6 @@ void protocol_evtSensor(uint8_t state);         // EVT SENSOR <OK|MISSING|ERROR>
 void protocol_evtData();                        // EVT DATA ... (only with STREAM 1)
 void protocol_evtAlarm(uint8_t flag, bool on);  // EVT ALARM <flag> <0|1>
 
-// Diagnostics (SPEC "Diagnose", not part of the stable contract)
-bool protocol_debugTouch();
-void protocol_evtTouch(int16_t rawX, int16_t rawY, int16_t z, int16_t x, int16_t y);  // throttled
 
 // Clock (RAM only, set by TIME) and uptime
 bool clock_valid();

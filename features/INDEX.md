@@ -25,9 +25,10 @@ Noch keine Features ausgeliefert.
 | PROJ-4 | PC-Tool CLI/GUI | Paket `umwelt_ctl`: Port-Erkennung, CLI, `monitor`, Tkinter-GUI mit Live-Werten | P0 | PROJ-3 | In Progress | [PROJ-4](PROJ-4-pc-tool-cli-gui.md) | 2026-10-02 |
 | PROJ-5 | Messprotokoll (CSV) | CSV mit PC-Zeitstempel (`monitor --csv`, GUI), Standard `~/umwelt_messwerte.csv` | P0 | PROJ-4 | In Progress | [PROJ-5](PROJ-5-messprotokoll-csv.md) | 2026-10-02 |
 | PROJ-6 | Schwellwerte, Alarm, Einstellungen | Messintervall/Schwellwerte/Einheiten im EEPROM, Alarm mit Hysterese (Farbe, optional Piezo), Konfiguration am Gerät und PC, Reset auf Defaults | P1 | PROJ-3, PROJ-4 | In Review | [PROJ-6](PROJ-6-schwellwerte-alarm-einstellungen.md) | 2026-10-02 |
-| PROJ-7 | Verlauf auf dem Gerät | Kurzer RAM-Verlauf/Trend-Anzeige (nur wenn RAM/Flash reichen) | P2 | PROJ-2 | Roadmap | — | 2026-10-02 |
+| PROJ-7 | Verlauf auf dem Gerät | Kurzer RAM-Verlauf/Trend-Anzeige (nur wenn RAM/Flash reichen) | P2 | PROJ-2 | ersetzt durch PROJ-10 | — | 2026-10-02 |
 | PROJ-8 | Control Panel (PySide6) | Desktop-Panel: Live-Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungen, dauerhaftes SQLite-Log, Verlauf, CSV-Export | P0 | PROJ-4, PROJ-5 | In Review | [PROJ-8](PROJ-8-control-panel.md) | 2026-10-02 |
 | PROJ-9 | Installer + Updater (Control Panel) | Windows-Installer (PyInstaller + Inno Setup, pro Benutzer) und Update-Suche im NAS-Ordner `05_Software\Umgebungssensoren` (latest.json, SHA-256), analog RFB | P1 | PROJ-8 | In Review | [PROJ-9](PROJ-9-installer-updater.md) | 2026-10-02 |
+| PROJ-10 | Live-Verlaufsdiagramm auf dem Gerät | Seite „Verlauf": RAM-Ringpuffer (64 Punkte à 30 s) je Messwert, Liniendiagramm mit Min/Max, Kacheltipp öffnet, Diagrammtipp wechselt den Wert; keine Protokolländerung (ersetzt PROJ-7) | P2 | PROJ-2 | In Review | [PROJ-10](PROJ-10-live-diagramm-geraet.md) | 2026-10-02 |
 
 <!-- Add features above this line -->
 

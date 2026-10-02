@@ -6,8 +6,8 @@
 #include "signal.h"
 #include "storage.h"
 
-// Pages (SPEC "Anzeige"): overview (values), settings, touch calibration.
-enum Page : uint8_t { PAGE_OVERVIEW, PAGE_SETTINGS, PAGE_CAL };
+// Pages (SPEC "Anzeige"): overview (values), settings, touch calibration, history graph.
+enum Page : uint8_t { PAGE_OVERVIEW, PAGE_SETTINGS, PAGE_CAL, PAGE_GRAPH };
 
 // ------------------------------------------------------------------ button tables (flash)
 struct Button {
@@ -39,8 +39,11 @@ static const Button BTN_SET[] PROGMEM = {
 };
 
 // Overview: a tap on the top strip (clock/status) acknowledges an alarm and opens the settings;
-// a tap on a value tile only acknowledges.
+// a tap on a value tile acknowledges and opens the history graph of that value.
 static const Rect TOP_AREA = {0, 0, SCREEN_W, SETTINGS_TAP_H};
+// Graph: a tap on the plot frame (drawn by display_graphUpdate() from the same constants)
+// shows the next value.
+static const Rect GRAPH_AREA = {GRAPH_X, GRAPH_Y, GRAPH_W, GRAPH_H};
 
 static void drawButton(const Button *table, uint8_t i, const char *label_P, uint16_t face) {
   Button b;
@@ -64,7 +67,7 @@ static uint8_t s_returnPage = PAGE_OVERVIEW;  // after calibration
 static uint8_t s_drawStep = 0;
 const uint8_t DRAW_DONE = 0xFF;
 static uint32_t s_lastActivity = 0;
-static bool s_testPattern = false;
+static uint8_t s_graphValue = 0;  // graph page: value shown (tile order)
 
 // settings page: values on screen (0x7FFF / 0xFF = redraw)
 static int16_t s_shownInterval;
@@ -290,6 +293,14 @@ static void drawPending() {
     done = drawCalStep(s_drawStep);
   } else if (s_page == PAGE_SETTINGS) {
     done = drawSettingsStep(s_drawStep);
+  } else if (s_page == PAGE_GRAPH) {  // clear, back button; display_graphUpdate() does the rest
+    done = s_drawStep != 0;
+    if (done) {
+      drawBack();
+      display_graphInvalidate();
+    } else {
+      display_clearAll();
+    }
   } else {  // overview: clear, then display_overviewUpdate() draws the rest
     if (s_drawStep == 0) {
       display_clearAll();
@@ -308,47 +319,12 @@ void ui_begin(bool startCalibration) {
   enter(startCalibration ? PAGE_CAL : PAGE_OVERVIEW, millis());
 }
 
-// ------------------------------------------------------------------ test pattern
-static void testCross(int16_t x, int16_t y, char id) {
-  Adafruit_ST7735 &tft = display_tft();
-  crossAt(x, y, COL_ALARM);
-  int16_t lx = (x > SCREEN_W / 2) ? x - 4 - 54 : x + 4;
-  int16_t ly = (y > SCREEN_H / 2) ? y - 12 : y + 4;
-  tft.setTextSize(1);
-  tft.setTextColor(COL_FG);
-  tft.setCursor(lx, ly);
-  tft.print(id);
-  tft.print(' ');
-  tft.print(x);
-  tft.print(',');
-  tft.print(y);
-}
-
-void ui_testPatternBegin() {
-  s_testPattern = true;
-  display_clearAll();
-  const int16_t l = TEST_INSET, r = SCREEN_W - 1 - TEST_INSET;
-  const int16_t t = TEST_INSET, b = SCREEN_H - 1 - TEST_INSET;
-  testCross(l, t, 'A');
-  testCross(r, t, 'B');
-  testCross(r, b, 'C');
-  testCross(l, b, 'D');
-  testCross(SCREEN_W / 2, SCREEN_H / 2, 'E');
-}
-
-void ui_testPatternEnd() {
-  if (!s_testPattern) return;
-  s_testPattern = false;
-  enter(s_page == PAGE_CAL ? (uint8_t)PAGE_OVERVIEW : s_page, millis());
-}
-
 // ------------------------------------------------------------------ main update
 void ui_update(uint32_t now) {
   TouchEvent ev = {TOUCH_NONE, 0, 0, 0, 0, 0};
   bool got = input_poll(now, ev);
   bool up = got && ev.type == TOUCH_UP;
   if (got) s_lastActivity = now;
-  if (s_testPattern) return;  // static diagnostic screen: no actions, no redraws
 
   if (s_page == PAGE_CAL) {
     if (up) {
@@ -362,28 +338,41 @@ void ui_update(uint32_t now) {
   }
 
   if (up && s_drawStep == DRAW_DONE) {
-    if (s_page == PAGE_SETTINGS) {
+    if (s_page != PAGE_OVERVIEW) {
       if (hitButton(BTN_BACK, 1, ev.x, ev.y) != 0xFF) {
         enter(PAGE_OVERVIEW, now);
         return;
       }
-      onSettings(ev, now);
+      if (s_page == PAGE_SETTINGS) {
+        onSettings(ev, now);
+      } else if (rectContains(GRAPH_AREA, ev.x, ev.y)) {
+        s_graphValue = (uint8_t)((s_graphValue + 1) & 3);  // next value
+        input_suppress(now);
+      }
     } else {
       signal_ack();  // same as ACK from the PC; no-op without an unacknowledged alarm
       if (rectContains(TOP_AREA, ev.x, ev.y)) {
         enter(PAGE_SETTINGS, now);
         return;
       }
+      uint8_t tile = display_tileAt(ev.x, ev.y);
+      if (tile != 0xFF) {
+        s_graphValue = tile;
+        enter(PAGE_GRAPH, now);
+        return;
+      }
       input_suppress(now);
     }
   }
-  if (s_page == PAGE_SETTINGS && (uint32_t)(now - s_lastActivity) >= UI_IDLE_TIMEOUT_MS) {
+  if (s_page != PAGE_OVERVIEW && (uint32_t)(now - s_lastActivity) >= UI_IDLE_TIMEOUT_MS) {
     enter(PAGE_OVERVIEW, now);
   }
   if (s_drawStep != DRAW_DONE) {
     drawPending();
   } else if (s_page == PAGE_SETTINGS) {
     settingsRefresh(now);
+  } else if (s_page == PAGE_GRAPH) {
+    display_graphUpdate(s_graphValue);
   } else {
     display_overviewUpdate(now);
   }

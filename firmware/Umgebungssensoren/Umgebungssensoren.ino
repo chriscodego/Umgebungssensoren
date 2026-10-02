@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "display.h"
+#include "history.h"
 #include "input.h"
 #include "protocol.h"
 #include "sensor.h"
@@ -18,6 +19,7 @@ void setup() {
   storage_begin();           // EEPROM: validate, defaults if invalid (nothing written)
   display_begin();
   sensor_begin();            // I2C probe 0x76/0x77; missing sensor = state MISSING
+  history_begin();           // graph ring (RAM only): all gaps
   bool calibrate = input_pressedNow();  // touch held at power-up -> calibration
   ui_begin(calibrate);
   protocol_evtBoot();
@@ -34,9 +36,5 @@ void loop() {
   if (ev & SENSOR_EV_DATA) protocol_evtData();
   if (ev != 0) signal_evaluate((ev & SENSOR_EV_DATA) != 0);
   signal_update(now);        // buzzer pattern
-
-  TouchDebug d;
-  if (input_debugSample(d) && protocol_debugTouch()) {
-    protocol_evtTouch(d.rawX, d.rawY, d.z, d.x, d.y);  // diagnostics, throttled
-  }
+  history_poll(now);         // graph point every GRAPH_STEP_S
 }

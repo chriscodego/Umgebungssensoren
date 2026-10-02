@@ -8,7 +8,7 @@ Kein Web, kein Server, keine Cloud. Ausführlich: `docs/PRD.md` (nach `/init`).
 
 ## 2. Projektstruktur & Architektur
 Siehe `CLAUDE.md` (Abschnitt „Project Structure") und `.claude/rules/general.md`.
-Firmware-Module (`firmware/Umgebungssensoren/`, FW 0.1.0):
+Firmware-Module (`firmware/Umgebungssensoren/`, FW 0.2.0):
 
 | Modul | Aufgabe |
 |---|---|
@@ -16,8 +16,9 @@ Firmware-Module (`firmware/Umgebungssensoren/`, FW 0.1.0):
 | `sensor` | einziger I2C-Nutzer: eigener gepollter TWI-Master + BME680-Treiber (Bosch-Ganzzahlkompensation), Zustandsmaschine Probe → Reset → Konfig → Trigger → Warten → Lesen |
 | `storage` | EEPROM Layout 1 (Config + Touch-Kalibrierung, je CRC-8), Bereichsprüfung |
 | `input` | XPT2046-Treiber (aus GloveboxControl), Entprellung, Kalibrierung |
-| `display` | Grafik-Primitive, Übersichtsseite mit Dirty-Tracking (max. eine Kachel je Durchlauf) |
-| `ui` | Seiten Übersicht / Einstellung / Kalibrierung, Seitenleiste, Hit-Tests aus denselben PROGMEM-Tabellen |
+| `display` | Grafik-Primitive, Übersichtsseite mit Dirty-Tracking (max. eine Kachel je Durchlauf), Verlaufsdiagramm in Schritten (8 Segmente je Durchlauf) |
+| `ui` | Seiten Übersicht / Einstellung / Kalibrierung / Verlauf, Hit-Tests aus denselben Tabellen bzw. Konstanten |
+| `history` | RAM-Ringpuffer für den Verlauf (4 Werte × 64 Punkte à 30 s, Zehntel, Lücke = −32768), nie EEPROM |
 | `protocol` | Zeilenparser, Antworten, Events, RAM-Uhr (`TIME`), Uptime |
 | `signal` | Alarm-Flags mit Hysterese, Quittierung, Piezo (Timer2) |
 
@@ -59,10 +60,10 @@ Befund 2026-10-02 (PROJ-1):
 | Stand | Flash | RAM (global) |
 |---|---|---|
 | FW 0.1.0 (PROJ-2/3/6), 2026-10-02 | 31 506 B (97,7 %) | 806 B (39 %) |
-| PROJ-10 Arbeitsstand (nicht geflasht), 2026-10-02 | 32 610 B (101 %, passt nicht) | 1 341 B (65 %) |
+| FW 0.2.0 (PROJ-10, ohne DEBUG TOUCH/TESTPATTERN), 2026-10-02 | 31 826 B (98,7 %) | 1 324 B (65 %) |
 
 Mit `Wire` lag der Build bei 32 524 B (> 100 %). > 95 % ist ein Architekturthema: PROJ-7 nur mit Einsparungen.
-PROJ-10 (Verlaufsdiagramm) kostet ≈ 1,2 KB Flash und 535 B RAM; ohne Streichen der Diagnosebefehle (`DEBUG TOUCH` ≈ 400 B, `TESTPATTERN` ≈ 330 B, `CAL SHOW` ≈ 190 B) passt es nicht → Nutzerentscheid offen.
+PROJ-10 (Verlaufsdiagramm) kostet ≈ 1,2 KB Flash und 535 B RAM; dafür entfielen die Diagnosebefehle `DEBUG TOUCH` und `TESTPATTERN` (≈ 730 B; Entscheid 2026-10-02, Vorschlag A), `CAL SHOW` bleibt. Reserve bis 32 000 B: ≈ 170 B.
 
 ## 7. EEPROM
 Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-history.md`. Schwellwert „OFF“ = −32768.
@@ -76,7 +77,7 @@ Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-histor
 - Gerätseitige Einstellungsänderungen erzeugen kein Event (SPEC hat keins)
 - Anzeige: Uhr zeigt `--:--`, solange nicht gestellt; Druck mit 1 Nachkommastelle, Temperatur/Feuchte auf 0,1 gerundet;
   Gas-Trendpfeil gegen gleitenden Mittelwert (Gewicht 1/8, ±5 %); Seitenleiste „Übersicht“ | „Einstellung“
-- Diagnose: `EVT TOUCH <rawX> <rawY> <z> <x> <y>`, `OK CAL <l> <r> <t> <b> <swap> <user>`
+- Diagnose: `OK CAL <l> <r> <t> <b> <swap> <user>` (`DEBUG TOUCH`/`EVT TOUCH` und `TESTPATTERN` seit FW 0.2.0 entfernt)
 
 ## 9. Entwicklungschronik
 | Datum | PROJ | Änderung |
@@ -88,5 +89,5 @@ Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-histor
 | 2026-10-02 | PROJ-8 | Control Panel `umwelt_panel` (PySide6, Extra `panel`): Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungsdialog, SQLite-Log (`user_version` 1) mit Verlauf und CSV-Export über `messlog.csv_text`; Serial im QThread; pytest-qt nur mit PySide6 geladen |
 | 2026-10-02 | PROJ-2 | Anzeige: Seitenleiste unten entfernt, Kacheln 80×58 füllen den Schirm, Einstellungen über Tipp auf die obere Leiste, „Zurück“-Taste; Flash 31 426 B (97 %) |
 | 2026-10-02 | PROJ-2/3/6/8 | FW 0.1.0 auf COM9 geflasht; Hardware-Smoke-Test (PING/STATUS/READ/CFG/STREAM/ACK/TIME, Alarm nach 2 Messungen, Fehlercodes 1/2/3/7) und 7 Hardware-Tests grün; Control Panel (PROJ-8) startet. Optische Abnahme des Displays und Touch-Bedienung am Gerät offen |
-| 2026-10-02 | PROJ-10 | Verlaufsseite (RAM-Ring `history.*`, 64 × 30 s je Wert, Diagramm in Schritten, Kacheltipp öffnet) umgesetzt, aber Build 32 610 B > Flash; Diagnosebefehle streichen = Nutzerentscheid offen; noch nicht committet/geflasht. Ohne Funktionsverlust gespart: `display_fmtNum` kompakter, `EVT TOUCH`-Ausgabe als Schleife |
+| 2026-10-02 | PROJ-10 | Verlaufsseite (RAM-Ring `history.*`, 64 × 30 s je Wert, Diagramm in Schritten, Kacheltipp öffnet) umgesetzt (FW 0.2.0); zuerst 32 610 B > Flash, daher `DEBUG TOUCH` und `TESTPATTERN` gestrichen (Entscheid Vorschlag A), `display_fmtNum` kompakter → 31 826 B; auf COM9 geflasht, Smoke-Test + 7 Hardware-Tests grün; optische Abnahme offen |
 | 2026-10-02 | PROJ-9 | Control Panel installierbar (`packaging/`: PyInstaller One-Dir ohne UPX, Inno Setup pro Benutzer, Installer `UmgebungssensorenPanel-Setup-0.1.0.exe` 33,6 MB) und Updater wie RFB PROJ-10: `latest.json` im NAS-Ordner `01_Interna\05_Software\Umgebungssensoren` (Override `UMWELT_UPDATE_DIR`), 5-s-Proben, SHA-256-geprüfte Kopie nach `%TEMP%\umwelt-panel-update`, Hinweis + Menü „Nach Updates suchen“; nur `release.py` schreibt in den Ordner; 56 neue Tests |

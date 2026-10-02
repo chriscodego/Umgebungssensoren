@@ -3,7 +3,6 @@
 #include "sensor.h"
 #include "signal.h"
 #include "storage.h"
-#include "ui.h"
 
 // ------------------------------------------------------------------ line buffer
 static char s_line[LINE_MAX + 1];
@@ -14,8 +13,6 @@ static bool s_inCmd = false;    // s_line is being executed: pump must not touch
 static uint32_t s_lastCmdMs = 0;
 static bool s_hadCmd = false;
 static bool s_stream = false;   // STREAM 1: EVT DATA after every measurement
-static bool s_debugTouch = false;
-static uint32_t s_lastTouchEvt = 0;
 
 // ------------------------------------------------------------------ clock / uptime
 static bool s_clockValid = false;
@@ -50,9 +47,6 @@ static const char K_OFF[] PROGMEM = "OFF";
 static const char K_STREAM[] PROGMEM = "STREAM";
 static const char K_ACK[] PROGMEM = "ACK";
 static const char K_TIME[] PROGMEM = "TIME";
-static const char K_DEBUG[] PROGMEM = "DEBUG";
-static const char K_TOUCH[] PROGMEM = "TOUCH";
-static const char K_TESTPATTERN[] PROGMEM = "TESTPATTERN";
 static const char K_CAL[] PROGMEM = "CAL";
 static const char K_SHOW[] PROGMEM = "SHOW";
 
@@ -137,21 +131,6 @@ void protocol_evtAlarm(uint8_t flag, bool on) {
   Serial.print(F("EVT ALARM "));
   Serial.print(flag);
   Serial.println(on ? F(" 1") : F(" 0"));
-}
-
-bool protocol_debugTouch() { return s_debugTouch; }
-
-void protocol_evtTouch(int16_t rawX, int16_t rawY, int16_t z, int16_t x, int16_t y) {
-  uint32_t now = millis();
-  if ((uint32_t)(now - s_lastTouchEvt) < DEBUG_TOUCH_MS) return;
-  s_lastTouchEvt = now;
-  Serial.print(F("EVT TOUCH"));
-  printVal(true, rawX);
-  printVal(true, rawY);
-  printVal(true, z);
-  printVal(true, x);
-  printVal(true, y);
-  Serial.println();
 }
 
 // ------------------------------------------------------------------ argument parsing
@@ -310,17 +289,7 @@ static uint8_t cmdTime(char **t, uint8_t n, uint32_t now) {
   return E_OK;
 }
 
-// Diagnostics: DEBUG TOUCH <0|1>, CAL SHOW, TESTPATTERN.
-static uint8_t cmdDebug(char **t, uint8_t n) {
-  if (n < 2) return E_ARGS;
-  if (!is(t[1], K_TOUCH)) return E_UNKNOWN;
-  bool on;
-  if (!parseFlag(t, n, 2, on)) return E_ARGS;
-  s_debugTouch = on;
-  sendOk();
-  return E_OK;
-}
-
+// Diagnostics: CAL SHOW (DEBUG TOUCH and TESTPATTERN were dropped in FW 0.2.0 for flash).
 static uint8_t cmdCal(char **t, uint8_t n) {
   if (n < 2) return E_ARGS;
   if (!is(t[1], K_SHOW)) return E_UNKNOWN;
@@ -354,7 +323,6 @@ static void handleLine(uint32_t now) {
 
   s_hadCmd = true;
   s_lastCmdMs = now;
-  ui_testPatternEnd();  // any command leaves the test screen (no-op otherwise)
 
   uint8_t e;
   const char *c = tok[0];
@@ -378,17 +346,8 @@ static void handleLine(uint32_t now) {
     e = cmdAck(n);
   } else if (is(c, K_TIME)) {
     e = cmdTime(tok, n, now);
-  } else if (is(c, K_DEBUG)) {
-    e = cmdDebug(tok, n);
   } else if (is(c, K_CAL)) {
     e = cmdCal(tok, n);
-  } else if (is(c, K_TESTPATTERN)) {
-    e = E_ARGS;
-    if (n == 1) {
-      sendOk();
-      ui_testPatternBegin();
-      e = E_OK;
-    }
   } else {
     e = E_UNKNOWN;
   }

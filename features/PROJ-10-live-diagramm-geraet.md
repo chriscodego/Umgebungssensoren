@@ -1,6 +1,6 @@
 # PROJ-10: Live-Verlaufsdiagramm auf dem Gerät
 
-## Status: In Progress
+## Status: In Review
 **Created:** 2026-10-02
 **Last Updated:** 2026-10-02
 
@@ -60,7 +60,7 @@ Variante A, vom Nutzer gewählt.
 | Reset / Stromausfall | Verlauf leer (alle Punkte Lücke), füllt sich neu |
 | Protokoll | keine Änderung |
 | PC-Tool | keine Änderung |
-| Ressourcen | RAM +535 B (806 → 1 341 B); Flash ≈ +1,2 KB (siehe Implementation Notes) |
+| Ressourcen | RAM 806 → 1 324 B; Flash 31 426 → 31 826 B (Feature ≈ 1,2 KB, Diagnosebefehle gestrichen) |
 
 ## Decision Log
 
@@ -76,6 +76,7 @@ Variante A, vom Nutzer gewählt.
 | Neues Modul `history.*` (Ringpuffer), Zeichnen in `display.cpp`, Seite in `ui.cpp` | Trennung Daten/Anzeige wie bei der Übersicht | 2026-10-02 |
 | Werte im Puffer in Zehnteln (0,1 °C / 0,1 % / 0,1 hPa / 0,1 kΩ), Lücke = −32768 | eine Skala für Beschriftung und Achse, int16 reicht | 2026-10-02 |
 | Spaltenweises Neuzeichnen (Segment löschen + Linie) | kein Flackern, keine langen Blockaden | 2026-10-02 |
+| `DEBUG TOUCH` und `TESTPATTERN` gestrichen | Flash-Budget; nur Inbetriebnahme-Diagnose | 2026-10-02 |
 
 ---
 
@@ -85,5 +86,6 @@ Variante A, vom Nutzer gewählt.
 - `display.cpp`: `display_tileAt()` (Kachelraster), `display_graphInvalidate()`, `display_graphUpdate()`; `display_fmtNum()` kompakter neu geschrieben (gleiche Ausgabe)
 - `ui.cpp`: `PAGE_GRAPH`, Kacheltipp öffnet den Verlauf, Diagrammtipp wechselt den Wert, „Zurück" und 60-s-Rückkehr wie Einstellungen
 - Einsparung ohne Funktionsverlust: `DEBUG TOUCH` rechnet die Bildschirmposition erst beim Ausgeben um und gibt die fünf Werte in einer Schleife aus (gleiche Ausgabe, −190 B)
-- **Speicher:** vorher 31 426 B Flash / 806 B RAM; jetzt 32 610 B Flash (101 %, passt nicht) / 1 341 B RAM
-- **Blockiert (DECISION_NEEDED):** Das Feature braucht ≈ 1,2 KB Flash; ohne Streichen bestehender Funktionen ist das Budget nicht erreichbar. Vorschlag: Diagnosebefehle `DEBUG TOUCH` und `TESTPATTERN` entfernen (nicht Teil des stabilen Vertrags, weder PC-Tool noch Tests nutzen sie) → ≈ 31 880 B; zusätzlich `CAL SHOW` → ≈ 31 690 B. Erst nach Nutzerentscheid: bauen, flashen, SPEC.md „Anzeige" ergänzen
+- Diagnosebefehle `DEBUG TOUCH` (inkl. `EVT TOUCH`) und `TESTPATTERN` entfernt (Entscheid 2026-10-02, Vorschlag A; nicht Teil des stabilen Vertrags, von PC-Tool/Tests nicht genutzt); `CAL SHOW` bleibt
+- **Speicher:** vorher 31 426 B Flash / 806 B RAM; jetzt 31 826 B Flash (98,7 %) / 1 324 B RAM (65 %), ohne neue Warnungen
+- **Hardware 2026-10-02:** FW 0.2.0 auf COM9 geflasht; PING/STATUS/READ ok, 7 Hardware-Tests grün, `TESTPATTERN`/`DEBUG TOUCH` → `ERR 1`, `CAL SHOW` ok. Optische Abnahme der Verlaufsseite und Touch-Bedienung am Gerät offen

@@ -1,7 +1,7 @@
 # SPEC — der Vertrag
 
 > Verbindlich für Firmware (`firmware/Umgebungssensoren/`), PC-Tool (`pc/src/umwelt_ctl/`) und Tests.
-> Änderungen am Draht-Format nur gemeinsam (siehe `.claude/rules/protocol.md`). Stand: 2026-10-02, Protokollversion 1.
+> Änderungen am Draht-Format nur gemeinsam (siehe `.claude/rules/protocol.md`). Stand: 2026-10-02, Protokollversion 1, Firmware 0.2.0.
 
 ## Hardware
 | Komponente | Anschluss |
@@ -45,10 +45,15 @@ Ursache besteht). „Keine Daten" gilt als Alarm 16, nie als „alles gut".
 Seiten (keine Seitenleiste; Ziele ≥ 24 px):
 1. **Übersicht:** vier gleich große Kacheln (Temperatur °C, Feuchte %, Druck hPa, Gas kΩ mit Trendpfeil) füllen den Bereich
    unter der Statuszeile (Uhrzeit `HH:MM` wenn gestellt, sonst `--:--`; Sensorstatus; „PC"-Symbol 5 s nach letztem
-   Kommando). Ungültig: `--`. Antippen einer Kachel quittiert einen Alarm; Antippen der oberen Leiste (Uhr/Status)
-   quittiert und öffnet die Einstellungen.
+   Kommando). Ungültig: `--`. Antippen einer Kachel quittiert einen Alarm und öffnet den Verlauf dieses Werts; Antippen
+   der oberen Leiste (Uhr/Status) quittiert und öffnet die Einstellungen.
 2. **Einstellungen:** Messintervall (+/−, Stufen 1·2·5·10·30·60 s), Piezo an/aus, „Kalibrieren" (Touch), „Standard",
    Taste „Zurück" unten (zusätzlich nach 60 s ohne Berührung automatisch zurück).
+3. **Verlauf** (ab FW 0.2.0, PROJ-10): Liniendiagramm der letzten 32 min eines Werts (Temperatur, Feuchte, Druck, Gas) aus
+   einem RAM-Ringpuffer (64 Punkte, ein Punkt alle 30 s aus der letzten Messung; ungültig/Sensor fehlt → Lücke, nie 0;
+   nach Reset leer). Kopfzeile Wertname + „32 min", links Achsen-Max (oben) und -Min (unten) mit einer Nachkommastelle
+   (Gas in kΩ, bis 3276,7), Achse mindestens 1,0 Einheiten; ohne Daten `--`. Antippen des Diagramms → nächster Wert;
+   „Zurück" unten bzw. 60 s ohne Berührung → Übersicht. Keine Protokolländerung; der Langzeitverlauf bleibt im PC-Panel.
 Die Uhr hat keine Batterie: Zeit kommt per `TIME` vom PC (`umwelt time sync`, `monitor`, GUI) und geht beim Stromverlust verloren.
 Nur geänderte Felder neu zeichnen, Ziffernreste vermeiden (feste Feldbreite), kein `fillScreen()` in `loop()`.
 
@@ -96,7 +101,7 @@ unbekannter Schlüssel · 5 Sensor nicht verfügbar · 7 falscher Zustand. (4 un
 zählt, der Text ist frei.
 
 ### Diagnose (nicht Teil des stabilen Vertrags)
-`DEBUG TOUCH <0|1>` (roher Touch als `EVT TOUCH x y`), `TESTPATTERN`, `CAL SHOW`. Format kann sich ändern; nach Reset aus.
+`CAL SHOW`. Format kann sich ändern. `DEBUG TOUCH` und `TESTPATTERN` entfallen ab FW 0.2.0 (Flash für PROJ-10) → `ERR 1`.
 
 ## PC-Tool (Entwurf der Oberfläche)
 CLI `umwelt`: `ping`, `status`, `ports`, `read`, `config [key [value]]`, `config reset`, `ack`, `time [sync]`,

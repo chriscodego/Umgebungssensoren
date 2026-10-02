@@ -28,9 +28,3 @@ void input_suppress(uint32_t now);
 bool input_pressedNow();
 // Hit-test with TOUCH_HIT_PAD tolerance around the drawn rectangle.
 bool rectContains(const Rect &r, int16_t x, int16_t y);
-
-// Diagnostics (DEBUG TOUCH): last pen-down sample, incl. ones below the pressure threshold.
-struct TouchDebug {
-  int16_t rawX, rawY, z, x, y;
-};
-bool input_debugSample(TouchDebug &d);  // true once per new sample

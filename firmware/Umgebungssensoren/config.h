@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 // ---------------------------------------------------------------- version
-#define FW_VERSION "0.1.0"
+#define FW_VERSION "0.2.0"
 #define FW_NAME    "Umgebungssensoren"
 
 // ---------------------------------------------------------------- pins (SPEC.md "Hardware")
@@ -105,8 +105,6 @@ const uint16_t BUZZER_REPEAT_MS = 10000;  // burst repeated while an alarm is un
 const uint32_t SERIAL_BAUD     = 115200;
 const uint8_t  LINE_MAX        = 80;     // max command line length (BYTES, without \n)
 const uint8_t  MAX_TOKENS      = 3;      // more tokens than this -> ERR 2
-const uint16_t DEBUG_TOUCH_MS  = 100;    // DEBUG TOUCH: at most one EVT TOUCH per interval
-const int16_t  TEST_INSET      = 10;     // TESTPATTERN: corner crosses inset from the edges
 const uint32_t PC_INDICATOR_MS = 5000;   // "PC" mark shown this long after the last command
 
 // ---------------------------------------------------------------- touch (XPT2046)
@@ -152,3 +150,16 @@ const uint16_t REDRAW_MS         = 250;     // overview refresh check
 const uint16_t CONFIRM_MS        = 3000;    // "Standard" needs a 2nd tap within this time
 const uint32_t UI_IDLE_TIMEOUT_MS = 60000;  // settings without touch -> back to overview
 const uint32_t CAL_IDLE_TIMEOUT_MS = 30000; // calibration without touch -> abort
+
+// ---------------------------------------------------------------- history graph (PROJ-10)
+// RAM ring per value (never EEPROM): one point every GRAPH_STEP_S, all values in tenths
+// (0.1 degC, 0.1 %rH, 0.1 hPa, 0.1 kOhm); an invalid value is a gap (GRAPH_GAP), never 0.
+const uint8_t  GRAPH_POINTS      = 64;      // power of two (ring index mask)
+const uint16_t GRAPH_STEP_S      = 30;      // 64 x 30 s = 32 min
+const int16_t  GRAPH_GAP         = -32768;
+const int16_t  GRAPH_MIN_SPAN    = 10;      // y axis spans at least 1.0 unit
+const int16_t  GRAPH_X           = 38;      // plot frame; the same rect is the tap target
+const int16_t  GRAPH_Y           = 12;      //   (tap: next value); min/max labels left of it
+const int16_t  GRAPH_W           = 122;
+const int16_t  GRAPH_H           = 90;
+const uint8_t  GRAPH_SEG_PER_PASS = 8;      // plot segments drawn per loop pass (~6 ms)
