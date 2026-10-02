@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "umwelt-ctl"
+version = "0.1.0"
+description = "PC-Tool für die Umgebungssensoren-Anzeige (Arduino + BME680): CLI, Monitor mit CSV-Messprotokoll, Tkinter-GUI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["pyserial>=3.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[project.scripts]
+umwelt = "umwelt_ctl.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-m 'not hardware'"
+markers = [
+    "hardware: braucht das echte Gerät (Port über UMWELT_PORT, Standard COM9); nur mit -m hardware",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["umwelt_ctl"]
+known-local-folder = ["conftest"]

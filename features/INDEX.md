@@ -22,8 +22,8 @@ Noch keine Features ausgeliefert.
 | PROJ-1 | Bestandsgerät analysieren | Ausgabe der vorhandenen Firmware auf COM9 beobachten, Quelle/Flash-Backup klären, Befund ins Handbuch | P0 | — | Roadmap | — | 2026-10-02 |
 | PROJ-2 | Firmware-Grundgerüst | Pins/config.h, Display, Touch (eigener XPT2046-Treiber, Kalibrierung), BME680 nicht blockierend, Übersichtsseite mit vier Werten, Sensor-fehlt-Zustand | P0 | PROJ-1 | Roadmap | — | 2026-10-02 |
 | PROJ-3 | Serielles Protokoll | Zeilenbasiertes Protokoll (PING, STATUS, READ, TIME, EVT DATA/BOOT), Fehlercodes, Firmware + PC-Client + Vertragstests | P0 | PROJ-2 | Roadmap | — | 2026-10-02 |
-| PROJ-4 | PC-Tool CLI/GUI | Paket `umwelt_ctl`: Port-Erkennung, CLI, `monitor`, Tkinter-GUI mit Live-Werten | P0 | PROJ-3 | Roadmap | — | 2026-10-02 |
-| PROJ-5 | Messprotokoll (CSV) | CSV mit PC-Zeitstempel (`monitor --csv`, GUI), Standard `~/umwelt_messwerte.csv` | P0 | PROJ-4 | Roadmap | — | 2026-10-02 |
+| PROJ-4 | PC-Tool CLI/GUI | Paket `umwelt_ctl`: Port-Erkennung, CLI, `monitor`, Tkinter-GUI mit Live-Werten | P0 | PROJ-3 | In Progress | [PROJ-4](PROJ-4-pc-tool-cli-gui.md) | 2026-10-02 |
+| PROJ-5 | Messprotokoll (CSV) | CSV mit PC-Zeitstempel (`monitor --csv`, GUI), Standard `~/umwelt_messwerte.csv` | P0 | PROJ-4 | In Progress | [PROJ-5](PROJ-5-messprotokoll-csv.md) | 2026-10-02 |
 | PROJ-6 | Schwellwerte, Alarm, Einstellungen | Messintervall/Schwellwerte/Einheiten im EEPROM, Alarm mit Hysterese (Farbe, optional Piezo), Konfiguration am Gerät und PC, Reset auf Defaults | P1 | PROJ-3, PROJ-4 | Roadmap | — | 2026-10-02 |
 | PROJ-7 | Verlauf auf dem Gerät | Kurzer RAM-Verlauf/Trend-Anzeige (nur wenn RAM/Flash reichen) | P2 | PROJ-2 | Roadmap | — | 2026-10-02 |
 
