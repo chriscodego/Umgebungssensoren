@@ -42,11 +42,14 @@ Hysterese: Alarm setzt bei Überschreitung in 2 aufeinanderfolgenden Messungen, 
 Ursache besteht). „Keine Daten" gilt als Alarm 16, nie als „alles gut".
 
 ## Anzeige (160×128, CP437, echte Umlaute, `°` = 0xF8)
-Seiten, Wechsel per Antippen der Seitenleiste unten (Ziele ≥ 24 px):
-1. **Übersicht:** vier Werte groß (Temperatur °C, Feuchte %, Druck hPa, Gas kΩ mit Trendpfeil), Statuszeile (Uhrzeit
-   `HH:MM` wenn gestellt, „PC"-Symbol 5 s nach letztem Kommando, Sensorstatus). Ungültig: `--`.
-2. **Einstellungen:** Messintervall (+/−, Stufen 1·2·5·10·30·60 s), Piezo an/aus, „Kalibrieren" (Touch), „Standard".
-3. (optional, nur wenn Flash reicht, PROJ-7) **Verlauf:** Min/Max seit Start, Temperaturverlauf Mini-Graph.
+Seiten (keine Seitenleiste; Ziele ≥ 24 px):
+1. **Übersicht:** vier gleich große Kacheln (Temperatur °C, Feuchte %, Druck hPa, Gas kΩ mit Trendpfeil) füllen den Bereich
+   unter der Statuszeile (Uhrzeit `HH:MM` wenn gestellt, sonst `--:--`; Sensorstatus; „PC"-Symbol 5 s nach letztem
+   Kommando). Ungültig: `--`. Antippen einer Kachel quittiert einen Alarm; Antippen der oberen Leiste (Uhr/Status)
+   quittiert und öffnet die Einstellungen.
+2. **Einstellungen:** Messintervall (+/−, Stufen 1·2·5·10·30·60 s), Piezo an/aus, „Kalibrieren" (Touch), „Standard",
+   Taste „Zurück" unten (zusätzlich nach 60 s ohne Berührung automatisch zurück).
+Die Uhr hat keine Batterie: Zeit kommt per `TIME` vom PC (`umwelt time sync`, `monitor`, GUI) und geht beim Stromverlust verloren.
 Nur geänderte Felder neu zeichnen, Ziffernreste vermeiden (feste Feldbreite), kein `fillScreen()` in `loop()`.
 
 ## Eingabe (Touch)

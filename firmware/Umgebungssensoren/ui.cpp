@@ -15,8 +15,7 @@ struct Button {
   const char *label;  // PROGMEM
 };
 
-static const char L_OVERVIEW[] PROGMEM = UE_UC "bersicht";
-static const char L_SETTINGS[] PROGMEM = "Einstellung";
+static const char L_BACK[] PROGMEM = "Zur" UE_ "ck";
 static const char L_MINUS[] PROGMEM = "-";
 static const char L_PLUS[] PROGMEM = "+";
 static const char L_BUZ_ON[] PROGMEM = "Piezo: an";
@@ -25,10 +24,9 @@ static const char L_CAL[] PROGMEM = "Kalibrieren";
 static const char L_DEFAULT[] PROGMEM = "Standard";
 static const char L_SURE[] PROGMEM = "Sicher?";
 
-// Page bar at the bottom (both pages); index = Page.
-static const Button BTN_TAB[] PROGMEM = {
-    {{0, TAB_Y, 80, TAB_H}, L_OVERVIEW},
-    {{80, TAB_Y, 80, TAB_H}, L_SETTINGS},
+// Settings: back button at the bottom.
+static const Button BTN_BACK[] PROGMEM = {
+    {{2, BACK_Y, 156, BACK_H}, L_BACK},
 };
 
 enum { B_MINUS = 0, B_PLUS, B_BUZZER, B_CAL, B_DEFAULT, B_SET_COUNT };
@@ -40,8 +38,9 @@ static const Button BTN_SET[] PROGMEM = {
     {{81, 76, 77, 26}, L_DEFAULT},  // "Sicher?" while waiting for the confirming tap
 };
 
-// Tap here on the overview acknowledges an alarm (status line + value tiles).
-static const Rect ACK_AREA = {0, 0, SCREEN_W, TAB_Y};
+// Overview: a tap on the top strip (clock/status) acknowledges an alarm and opens the settings;
+// a tap on a value tile only acknowledges.
+static const Rect TOP_AREA = {0, 0, SCREEN_W, SETTINGS_TAP_H};
 
 static void drawButton(const Button *table, uint8_t i, const char *label_P, uint16_t face) {
   Button b;
@@ -79,9 +78,7 @@ static uint8_t s_calStep = 0;
 static bool s_calError = false;
 static int16_t s_calRawX[4], s_calRawY[4];
 
-static void drawTabs() {
-  for (uint8_t i = 0; i < 2; i++) drawButton(BTN_TAB, i, nullptr, i == s_page ? COL_BTN_ON : COL_BTN);
-}
+static void drawBack() { drawButton(BTN_BACK, 0, nullptr, COL_BTN); }
 
 // ------------------------------------------------------------------ settings page
 static void drawInterval(int16_t v) {
@@ -104,7 +101,7 @@ static bool drawSettingsStep(uint8_t step) {
     return false;
   }
   if (step == 1) {
-    drawTabs();
+    drawBack();
     return false;
   }
   if (step == 2) {
@@ -293,12 +290,11 @@ static void drawPending() {
     done = drawCalStep(s_drawStep);
   } else if (s_page == PAGE_SETTINGS) {
     done = drawSettingsStep(s_drawStep);
-  } else {  // overview: clear + page bar, then display_overviewUpdate() draws the rest
+  } else {  // overview: clear, then display_overviewUpdate() draws the rest
     if (s_drawStep == 0) {
       display_clearAll();
       done = false;
     } else {
-      drawTabs();
       display_overviewInvalidate();
       done = true;
     }
@@ -366,15 +362,18 @@ void ui_update(uint32_t now) {
   }
 
   if (up && s_drawStep == DRAW_DONE) {
-    uint8_t tab = hitButton(BTN_TAB, 2, ev.x, ev.y);
-    if (tab != 0xFF) {
-      if (tab != s_page) enter(tab, now);
-      return;
-    }
     if (s_page == PAGE_SETTINGS) {
+      if (hitButton(BTN_BACK, 1, ev.x, ev.y) != 0xFF) {
+        enter(PAGE_OVERVIEW, now);
+        return;
+      }
       onSettings(ev, now);
-    } else if (rectContains(ACK_AREA, ev.x, ev.y)) {
+    } else {
       signal_ack();  // same as ACK from the PC; no-op without an unacknowledged alarm
+      if (rectContains(TOP_AREA, ev.x, ev.y)) {
+        enter(PAGE_SETTINGS, now);
+        return;
+      }
       input_suppress(now);
     }
   }

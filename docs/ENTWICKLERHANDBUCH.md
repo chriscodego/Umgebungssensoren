@@ -77,3 +77,4 @@ Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-histor
 | 2026-10-02 | PROJ-1 | Bestandsgerät analysiert (9600-Baud-CSV, BME680 funktioniert, EEPROM-Sicherung ungültig) |
 | 2026-10-02 | PROJ-2/3/6 | Firmware 0.1.0: eigener BME680-/TWI-Treiber, Übersicht + Einstellungsseite, Protokoll v1, Alarm/Piezo, EEPROM Layout 1; noch nicht geflasht |
 | 2026-10-02 | PROJ-4/5 | PC-Tool umwelt_ctl (CLI, monitor, GUI, Fake-Device-Tests) und CSV-Messprotokoll |
+| 2026-10-02 | PROJ-2 | Anzeige: Seitenleiste unten entfernt, Kacheln 80×58 füllen den Schirm, Einstellungen über Tipp auf die obere Leiste, „Zurück“-Taste; Flash 31 426 B (97 %) |

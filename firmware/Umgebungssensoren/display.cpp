@@ -163,10 +163,10 @@ static void drawTile(uint8_t i, uint8_t vis, bool full) {
     uint8_t f = signal_flags() & tileBits(i);
     if (f) {  // text, not only colour: which limit is violated
       strcpy_P(buf, (f & (ALARM_T_HI | ALARM_RH_HI)) ? PSTR("! zu hoch") : PSTR("! zu tief"));
-      display_text(r.x + 4, r.y + 35, 1, fg, bg, buf);
+      display_text(r.x + 4, r.y + 44, 1, fg, bg, buf);
     }
   }
-  display_text(r.x + 4, r.y + 16, 2, fg, bg, s_val[i]);
+  display_text(r.x + 4, r.y + 22, 2, fg, bg, s_val[i]);
 }
 
 static void drawStatus(uint8_t code) {
