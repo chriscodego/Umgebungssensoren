@@ -10,6 +10,11 @@
 | Touch | XPT2046, resistiv, SPI |
 | Sensor | **BME680** (Temperatur, Feuchte, Druck, Gas), I2C 0x76/0x77 |
 
+## Befund 2026-10-02
+- Die Bestandsfirmware liefert plausible BME680-Werte (24,2 °C, 53,6 %, 1013,9 hPa) → Verdrahtung A4/A5 und Versorgung funktionieren.
+- Adresse 0x76 oder 0x77 (die Firmware probiert beide; Ergebnis nach dem ersten Upload in `STATUS`/Display prüfen).
+- Neue Firmware: eigener TWI-Master, 100 kHz, interne Pull-ups an (wie `Wire`).
+
 ## Zu klären (BME680)
 - Welches Breakout? (Adafruit/Pimoroni/China-Modul) → eigener Regler und Pegelwandler vorhanden? Ein
   nacktes 3,3-V-Modul darf nicht an die 5-V-I2C-Leitungen des Uno
