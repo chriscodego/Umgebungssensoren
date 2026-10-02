@@ -38,7 +38,7 @@ Befund 2026-10-02 (PROJ-1):
 - [ ] **EEPROM-Sicherung ungültig:** `bestandsfirmware_eeprom.hex` ist byte-gleich mit den ersten 1024 B des Flash
   (Optiboot liefert beim EEPROM-Lesen Flash). Die neue Firmware schreibt das EEPROM erst bei der ersten Einstellungsänderung.
 - [ ] Originalquelle beim Nutzer erfragen (offen)
-- [ ] Überschreiben: Freigabe des Nutzers selbst steht aus (Upload noch nicht erfolgt)
+- [x] Überschreiben: vom Nutzer ausdrücklich angeordnet, FW 0.1.0 am 2026-10-02 geflasht
 
 ## 5. Bekannte Fallstricke
 - `arduino-cli.exe` liegt in `C:\Program Files\Arduino CLI\`, nicht im PATH
@@ -81,3 +81,4 @@ Layout 1 (29 B ab Adresse 0): siehe `storage.cpp` und `docs/eeprom-layout-histor
 | 2026-10-02 | PROJ-4/5 | PC-Tool umwelt_ctl (CLI, monitor, GUI, Fake-Device-Tests) und CSV-Messprotokoll |
 | 2026-10-02 | PROJ-8 | Control Panel `umwelt_panel` (PySide6, Extra `panel`): Kacheln + Sparklines, Verbindungs-/Alarmbanner, Einstellungsdialog, SQLite-Log (`user_version` 1) mit Verlauf und CSV-Export über `messlog.csv_text`; Serial im QThread; pytest-qt nur mit PySide6 geladen |
 | 2026-10-02 | PROJ-2 | Anzeige: Seitenleiste unten entfernt, Kacheln 80×58 füllen den Schirm, Einstellungen über Tipp auf die obere Leiste, „Zurück“-Taste; Flash 31 426 B (97 %) |
+| 2026-10-02 | PROJ-2/3/6/8 | FW 0.1.0 auf COM9 geflasht; Hardware-Smoke-Test (PING/STATUS/READ/CFG/STREAM/ACK/TIME, Alarm nach 2 Messungen, Fehlercodes 1/2/3/7) und 7 Hardware-Tests grün; Control Panel (PROJ-8) startet. Optische Abnahme des Displays und Touch-Bedienung am Gerät offen |
